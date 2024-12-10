@@ -32,7 +32,10 @@ The overall project process is illustrated in the diagram below:
 *(This diagram might be updated as the project evolves.)*  
 
 Key milestones during the first phase of the project are documented here:  
-![Phase 1 Steps](https://github.com/user-attachments/assets/d4893370-aa62-4292-8f21-e8def598a2b2)  
+![Phase 1 Steps](https://github.com/user-attachments/assets/d4893370-aa62-4292-8f21-e8def598a2b2)
+
+Timeline for the Project:
+![grafik](https://github.com/user-attachments/assets/c5f36f73-9661-417c-93a1-b653d2e80340)
 
 For detailed progress tracking, check out our Trello board:  
 👉 [Trello: PowderAlert 2.0](https://trello.com/b/ZE5LyJcF/powderalert20)  
