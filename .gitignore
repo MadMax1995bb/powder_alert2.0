@@ -18,9 +18,6 @@
 
 #Raw data
 raw_data/
-<<<<<<< HEAD
-raw_data/
-=======
 *.csv
 *.sqlite
 *.zip
@@ -48,4 +45,3 @@ secrets.toml
 
 # User defined extras
 # Complete to our needs
->>>>>>> d5ec785e195e746526f961a7c47f422b35115caa
