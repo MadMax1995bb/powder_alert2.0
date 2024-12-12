@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
+# from ml_logic.params import *
 
 def label_encode_columns(cat_data, cat_columns):
     """Apply LabelEncoder to specified categorical columns."""
@@ -13,7 +14,7 @@ def define_X(df: pd.DataFrame, target:list):
     X = df.drop(columns=target, axis=1)
     return X
 
-def preprocess(X):
+def preprocess(df):
     """
     Process the input data X by applying label encoding to categorical columns
     and standard scaling to numerical columns.
@@ -58,3 +59,17 @@ def preprocess(X):
     # print(processed_columns)
 
     return pd.DataFrame(processed_X, columns=processed_columns)
+
+
+
+#Path to raw data for 1) Open weather historical data 2) Open-meteo API weather
+filepath_hist_api = '/Users/torstenwrigley/code/MadMax1995bb/powder_alert2.0/raw_data/openmeteo_api_zentralstation.csv'
+#CSV -> DF for api data
+csv_file = filepath_hist_api
+df = pd.read_csv(csv_file)
+
+
+
+X = define_X(df,['snowfall'])
+
+preprocess(X)

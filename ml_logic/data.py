@@ -175,3 +175,5 @@ def load_data_to_bq(
     result = job.result()  # wait for the job to complete
 
     print(f"✅ Data saved to bigquery, with shape {data.shape}")
+
+
