@@ -59,17 +59,3 @@ def preprocess(df):
     # print(processed_columns)
 
     return pd.DataFrame(processed_X, columns=processed_columns)
-
-
-
-#Path to raw data for 1) Open weather historical data 2) Open-meteo API weather
-filepath_hist_api = '/Users/torstenwrigley/code/MadMax1995bb/powder_alert2.0/raw_data/openmeteo_api_zentralstation.csv'
-#CSV -> DF for api data
-csv_file = filepath_hist_api
-df = pd.read_csv(csv_file)
-
-
-
-X = define_X(df,['snowfall'])
-
-preprocess(X)
