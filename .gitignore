@@ -30,6 +30,7 @@ data/
 models/
 *.joblib
 *.h5
+darts_logs/
 
 # Any pickle files
 *.pickle
@@ -46,3 +47,4 @@ secrets.toml
 # User defined extras
 # Complete to our needs
 darts_logs/
+logs/
