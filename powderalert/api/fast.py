@@ -1,15 +1,14 @@
 import pandas as pd
-# $WIPE_BEGIN
-
-# $WIPE_END
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from darts.models import TransformerModel
 from datetime import datetime
-from powderalert.ml_logic.data import fetch_prediction_data, clean_data
+from powderalert.ml_logic.data import fetch_prediction_data, clean_data, time_features
 from powderalert.ml_logic.preprocessor import preprocess, define_X
 from powderalert.ml_logic.params import *
+from powderalert.ml_logic import load_best_model
+
 from darts import TimeSeries
 
 app = FastAPI()
@@ -22,38 +21,7 @@ app.state.model2 = TransformerModel.load(max_model_relative_path)
 
 @app.get("/")
 def root():
-    # $CHA_BEGIN
     return dict(greeting="Hello")
-    # $CHA_END
-
-@app.get("/predict_temp")
-def predict():
-
-    model = app.state.model2
-    assert model is not None
-
-    data = fetch_prediction_data(lat,long)
-    cleaned_data = clean_data(data)
-    X_pred = define_X(cleaned_data,target)
-    X_processed = preprocess(X_pred)
-
-    data_darts = data.copy()
-
-    snowfall_series = TimeSeries.from_dataframe(data_darts, 'date', 'snowfall')
-    feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_processed.columns)
-
-    print(X_processed)
-    y_pred = model.predict(series =snowfall_series,past_covariates=feature_series,n=48)
-
-    print(y_pred)
-    # ⚠️ fastapi only accepts simple Python data types as a return value
-    # among them dict, list, str, int, float, bool
-    # in order to be able to convert the api response to JSON
-    return {
-        'key': 'value'
-    }
-    # $CHA_END
-
 
 @app.get("/predict_snowfall")
 def predict():
@@ -62,8 +30,9 @@ def predict():
     assert model is not None
 
     data = fetch_prediction_data(lat,long)
-    cleaned_data = clean_data(data)
-    X_pred = define_X(cleaned_data,target)
+    data_engineered_cleaned = time_features(data)
+    cleaned_data = clean_data(data_engineered_cleaned)
+    X_pred = define_X(cleaned_data,target1)
     X_processed = preprocess(X_pred)
 
     data_darts = data.copy()
@@ -81,4 +50,27 @@ def predict():
     return {
         'key': 'value'
     }
-    # $CHA_END
+
+@app.get("/predict_temp")
+def predict():
+
+    model = app.state.model2
+    assert model is not None
+
+    data = fetch_prediction_data(lat,long)
+    data_engineered_cleaned = time_features(data)
+    X_processed = preprocess(data_engineered_cleaned)
+
+    df_topredict = X_processed.copy()
+
+
+    best_model = load_best_model(model)
+    y_pred = best_model.predict(df_topredict)
+
+    print(y_pred)
+    # ⚠️ fastapi only accepts simple Python data types as a return value
+    # among them dict, list, str, int, float, bool
+    # in order to be able to convert the api response to JSON
+    return {
+        'key': 'value'
+    }
