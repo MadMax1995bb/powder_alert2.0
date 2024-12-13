@@ -21,37 +21,6 @@ from tensorflow.keras.optimizers import Adam
 from sklearn.model_selection import GridSearchCV
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 
-
-################################################################################################################
-
-def updating_data_format(df):
-    # Do i need these steps here?:
-    fetch_weather_data(latitude=lat, longitude=long, start_date=start_date_hist, end_date=end_date_hist_date_hist, variables=None, models="best_match")
-    clean_data(df)
-
-    # The following block with feature engineering can still be added to the preprocessor
-    df['datetime'] = pd.to_datetime(df['date'])  # Convert 'datetime' column to datetime format
-    df.set_index('datetime', inplace=True)
-    df['hour_sin'] = np.sin(2 * np.pi * df.index.hour / 24)
-    df['hour_cos'] = np.cos(2 * np.pi * df.index.hour / 24)
-    df['day_of_week_sin'] = np.sin(2 * np.pi * df.index.dayofweek / 7)
-    df['day_of_week_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
-    df['month_sin'] = np.sin(2 * np.pi * (df.index.month - 1) / 12)
-    df['month_cos'] = np.cos(2 * np.pi * (df.index.month - 1) / 12)
-
-    df = df.dropna()
-
-    label_encode_columns(cat_data, cat_columns) # where do we need this?
-
-    X = df # will define y later, for no y is still included as a feature (TimeSeries specific thing)
-
-    preprocess(X)
-
-    # Do i need to change the inputs for the follwoing sections now?
-    # Because preprocess will output X as processed_X
-    # Furthermore, are the columns named differently now? That would be important for the
-    # TARGET i defined in the following function and in the function only_use_relevant_features()
-
 ################################################################################################################
 
 def create_folds_sequences(label_encode_columns):
@@ -236,6 +205,10 @@ def initialize_base_model(X_train: tuple) -> Model:
     model.compile(loss='mse', optimizer=optimizer, metrics=["mae"])
 
     return model
+
+# 1) best_hps
+# 2) load model
+# assign a dictionary (kwargs, kargs)
 
 ################################################################################################################
 
