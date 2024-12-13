@@ -1,6 +1,7 @@
 import openmeteo_requests
 import requests_cache
 import pandas as pd
+import numpy as np
 from retry_requests import retry
 from google.cloud import bigquery
 from colorama import Fore, Style
@@ -144,6 +145,17 @@ def clean_data(df):
     df = df.set_index(['date'])
     df = df.drop_duplicates()
     print(f"✅ Data cleaned")
+    return df
+
+def time_features(df: pd.DataFrame):
+    df = clean_data(df)
+    df['hour_sin'] = np.sin(2 * np.pi * df.index.hour / 24)
+    df['hour_cos'] = np.cos(2 * np.pi * df.index.hour / 24)
+    df['day_of_week_sin'] = np.sin(2 * np.pi * df.index.dayofweek / 7)
+    df['day_of_week_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
+    df['month_sin'] = np.sin(2 * np.pi * (df.index.month - 1) / 12)
+    df['month_cos'] = np.cos(2 * np.pi * (df.index.month - 1) / 12)
+    print(f"✅ time features engineered and saved into DataFrame")
     return df
 
 def load_data_to_bq(data: pd.DataFrame, gcp_project:str, bq_dataset:str,table: str,truncate: bool) -> None:
