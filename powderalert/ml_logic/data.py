@@ -5,6 +5,8 @@ from retry_requests import retry
 from google.cloud import bigquery
 from colorama import Fore, Style
 from powderalert.ml_logic.params import *
+from powderalert.ml_logic.preprocessor import define_X, preprocess
+from datetime import datetime as dt
 
 
 def fetch_weather_data(latitude, longitude, start_date, end_date, variables=None, models="best_match"):
@@ -138,6 +140,7 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
     return prediction_dataframe
 
 def clean_data(df):
+    df['date'] = df['date'].dt.tz_localize(None)
     df = df.set_index(['date'])
     df = df.drop_duplicates()
     print(f"✅ Data cleaned")
@@ -169,5 +172,3 @@ def load_data_to_bq(data: pd.DataFrame, gcp_project:str, bq_dataset:str,table: s
     result = job.result()  # wait for the job to complete
 
     print(f"✅ Data saved to bigquery, with shape {data.shape}")
-
-train_df = fetch_weather_data(lat,long,start_date_hist,end_date_hist)
