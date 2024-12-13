@@ -1,0 +1,66 @@
+import numpy as np
+import pandas as pd
+
+from pathlib import Path
+from colorama import Fore, Style
+from dateutil.parser import parse
+from ml_logic.params import *
+from ml_logic.data import *
+
+
+def preprocess(table_name,min_date:str = start_date_hist, max_date:str = end_date_hist) -> None:
+    """
+    - Query the raw dataset from Le Wagon's BigQuery dataset
+    - Cache query result as a local CSV if it doesn't exist locally
+    - Process query data
+    - Store processed data on your personal BQ (truncate existing table if it exists)
+    - No need to cache processed data as CSV (it will be cached when queried back from BQ during training)
+    """
+
+    # Query raw data from BigQuery using `get_data_with_cache`
+    min_date = parse(min_date).strftime('%Y-%m-%d') # e.g '2009-01-01'
+    max_date = parse(max_date).strftime('%Y-%m-%d') # e.g '2009-01-01'
+
+    query = f"""
+        SELECT *
+        FROM `{GCP_PROJECT}`.{BQ_DATASET}.{table_name}
+        WHERE date BETWEEN '{min_date}' AND '{max_date}'
+        ORDER BY date
+    """
+
+    # Retrieve data using `get_data_with_cache`
+    data_query_cache_path = Path(LOCAL_DATA_PATH).joinpath("raw", f"query_{min_date}_{max_date}.csv")  # Removed DATA_SIZE
+    data_query = get_data_with_cache(
+        query=query,
+        gcp_project=GCP_PROJECT,
+        cache_path=data_query_cache_path,
+        data_has_header=True
+    )
+
+    # Process data
+    data_clean = clean_data(data_query)
+
+    X = data_clean.drop("fare_amount", axis=1)
+    y = data_clean[["fare_amount"]]
+
+    X_processed = preprocess_features(X)
+
+    # Load a DataFrame onto BigQuery containing [pickup_datetime, X_processed, y]
+    # using data.load_data_to_bq()
+    data_processed_with_timestamp = pd.DataFrame(np.concatenate((
+        data_clean[["pickup_datetime"]],
+        X_processed,
+        y,
+    ), axis=1))
+
+    load_data_to_bq(
+        data_processed_with_timestamp,
+        gcp_project=GCP_PROJECT,
+        bq_dataset=BQ_DATASET,
+        table=f'processed_{DATA_SIZE}',
+        truncate=True
+    )
+
+    print("✅ preprocess() done \n")
+
+

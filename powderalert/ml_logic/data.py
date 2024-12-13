@@ -4,7 +4,9 @@ import pandas as pd
 from retry_requests import retry
 from google.cloud import bigquery
 from colorama import Fore, Style
-from ml_logic.params import *
+from powderalert.ml_logic.params import *
+from powderalert.ml_logic.preprocessor import define_X, preprocess
+from datetime import datetime as dt
 
 
 def fetch_weather_data(latitude, longitude, start_date, end_date, variables=None, models="best_match"):
@@ -30,7 +32,7 @@ def fetch_weather_data(latitude, longitude, start_date, end_date, variables=None
     # Default variables if not provided
     if variables is None:
         variables = [
-            "temperature_2m", "relative_humidity_2m", "dew_point_2m", "apparent_temperature", "precipitation",
+            "temperature_2m", "relative_humidity_2m", "dew_point_2m", "precipitation",
             "rain", "snowfall", "snow_depth", "weather_code", "pressure_msl", "surface_pressure", "cloud_cover",
             "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high", "et0_fao_evapotranspiration",
             "vapour_pressure_deficit", "wind_speed_10m", "wind_speed_100m", "wind_direction_10m",
@@ -95,7 +97,7 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
     # Default variables if not provided
     if variables is None:
         variables = [
-            "temperature_2m", "relative_humidity_2m", "dew_point_2m", "apparent_temperature", "precipitation",
+            "temperature_2m", "relative_humidity_2m", "dew_point_2m", "precipitation",
             "rain", "snowfall", "snow_depth", "weather_code", "pressure_msl", "surface_pressure", "cloud_cover",
             "cloud_cover_low", "cloud_cover_mid", "cloud_cover_high", "et0_fao_evapotranspiration",
             "vapour_pressure_deficit", "wind_speed_10m", "wind_speed_100m", "wind_direction_10m",
@@ -138,18 +140,13 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
     return prediction_dataframe
 
 def clean_data(df):
-    df = df.set_index(['date'], inplace=True)
+    df['date'] = df['date'].dt.tz_localize(None)
+    df = df.set_index(['date'])
     df = df.drop_duplicates()
     print(f"✅ Data cleaned")
     return df
 
-def load_data_to_bq(
-        data: pd.DataFrame,
-        gcp_project:str,
-        bq_dataset:str,
-        table: str,
-        truncate: bool
-    ) -> None:
+def load_data_to_bq(data: pd.DataFrame, gcp_project:str, bq_dataset:str,table: str,truncate: bool) -> None:
     """
     - Save the DataFrame to BigQuery
     - Empty the table beforehand if `truncate` is True, append otherwise
@@ -175,5 +172,3 @@ def load_data_to_bq(
     result = job.result()  # wait for the job to complete
 
     print(f"✅ Data saved to bigquery, with shape {data.shape}")
-
-
