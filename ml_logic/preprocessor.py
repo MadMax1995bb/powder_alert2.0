@@ -2,6 +2,7 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
+# from ml_logic.params import *
 
 def label_encode_columns(cat_data, cat_columns):
     """Apply LabelEncoder to specified categorical columns."""
@@ -13,7 +14,7 @@ def define_X(df: pd.DataFrame, target:list):
     X = df.drop(columns=target, axis=1)
     return X
 
-def preprocess(X):
+def preprocess(df):
     """
     Process the input data X by applying label encoding to categorical columns
     and standard scaling to numerical columns.
