@@ -15,7 +15,7 @@ def define_X(df: pd.DataFrame, target:list):
     X = df.drop(columns=target, axis=1)
     return X
 
-def preprocess(X):
+def preprocess(data):
     """
     Process the input data X by applying label encoding to categorical columns
     and standard scaling to numerical columns.
@@ -28,7 +28,7 @@ def preprocess(X):
     """
     # Define categorical and numerical columns
     cat_columns = ['weather_code']
-    num_columns = X.drop(columns=cat_columns).select_dtypes(include=['float64']).columns.tolist()
+    num_columns = data.drop(columns=cat_columns).select_dtypes(include=['float64']).columns.tolist()
 
     # Helper function to generate column names for label-encoded columns
     def get_label_encoded_column_names(cat_columns):
@@ -50,13 +50,15 @@ def preprocess(X):
     preprocess_pipe = make_pipeline(preprocessor)
 
     # Process and return the transformed data
-    processed_X = preprocess_pipe.fit_transform(X)
+    processed_data = preprocess_pipe.fit_transform(data)
 
     # Convert to DataFrame to maintain column names
-    processed_columns = get_label_encoded_column_names(cat_columns) + num_columns + list(X.columns.difference(cat_columns + num_columns))
+    processed_columns = get_label_encoded_column_names(cat_columns) + num_columns + list(data.columns.difference(cat_columns + num_columns))
 
-    print("✅ X_processed, with shape", processed_X.shape)
+    print("✅ Processed data, with shape", processed_data.shape)
 
     # print(processed_columns)
 
-    return pd.DataFrame(processed_X, columns=processed_columns)
+    return pd.DataFrame(processed_data, columns=processed_columns)
+
+
