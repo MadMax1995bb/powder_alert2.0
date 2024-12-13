@@ -14,7 +14,7 @@ def define_X(df: pd.DataFrame, target:list):
     X = df.drop(columns=target, axis=1)
     return X
 
-def preprocess(df):
+def preprocess(X):
     """
     Process the input data X by applying label encoding to categorical columns
     and standard scaling to numerical columns.
