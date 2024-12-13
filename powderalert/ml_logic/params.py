@@ -9,7 +9,8 @@ end_date_hist = "2023-12-31"
 
 prediction_length = 2
 
-target = ['snowfall']
+target1 = ['snowfall']
+target2 = ['temperature_2m']
 
 
 ##################  VARIABLES  ##################

@@ -1,45 +1,34 @@
 import numpy as np
-from colorama import Fore, Style
 from typing import Tuple
 from tensorflow import keras
-from keras import Model, Sequential, layers, regularizers, optimizers
-from keras.callbacks import EarlyStopping
+from keras import Model, layers, regularizers
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-from ml_logic.preprocessor import preprocess, label_encode_columns
-from ml_logic.data import fetch_weather_data, clean_data
-from ml_logic.params import lat, long, start_date_hist, end_date_hist_date_hist
-from typing import Dict, List, Tuple, Sequence
-from tensorflow.keras import models
-from tensorflow.keras import layers
-from tensorflow.keras import optimizers, metrics
-from tensorflow.keras.layers import Normalization, BatchNormalization
-from tensorflow.keras import regularizers
-from tensorflow.keras.optimizers.schedules import ExponentialDecay
+from ml_logic.params import target2
+from typing import List, Tuple
+from tensorflow.keras import models, layers, regularizers
 from tensorflow.keras.optimizers import Adam
-from sklearn.model_selection import GridSearchCV
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
+from keras_tuner import HyperModel
 
 ################################################################################################################
 
-def create_folds_sequences(label_encode_columns):
-    FOLD_LENGTH = label_encode_columns.shape[0] # each fold will have the whole dataset --> only 1 fold in this model
+def create_folds_sequences(df):
+    FOLD_LENGTH = df.shape[0] # each fold will have the whole dataset --> only 1 fold in this model
     FOLD_STRIDE = 1 # sliding only on hour
     # Temporal Train-Test split
-    TRAIN_TEST_RATIO = 0.66
+    TRAIN_TEST_RATIO = 2/3
     # Inputs
     N_FEATURES = df.shape[1]
     INPUT_LENGTH = 48 # 48 hours input = forecast the upcooming 48 hours
     # Outputs
-    TARGET = ['temperature_2m']
-    TARGET_COLUMN_IDX = 1 # 'temperature_2m' corresponds to the second column of the df
+    TARGET = target2
     N_TARGETS = 1
     OUTPUT_LENGTH = N_TARGETS*48 # - Predicting one target, the temperature - for two days with predictions every hour
     # Additional parameters
     HORIZON = 1 # - We are predicting next two days
 
-    def get_folds(
+    def get_fold(
         df: pd.DataFrame,
         fold_length: int,
         fold_stride: int) -> List[pd.DataFrame]:
@@ -56,15 +45,14 @@ def create_folds_sequences(label_encode_columns):
                 break
             fold = df.iloc[idx:idx + fold_length, :]
             folds.append(fold)
-        return folds
+        fold = folds[0]
+        return fold
 
-    folds = get_folds(df, FOLD_LENGTH, FOLD_STRIDE)
-    fold = folds[0]
+    get_fold(df, FOLD_LENGTH, FOLD_STRIDE)
 
     def train_test_split(fold: pd.DataFrame,
         train_test_ratio: float,
-        input_length: int,
-        horizon: int) -> Tuple[pd.DataFrame]:
+        input_length: int) -> Tuple[pd.DataFrame]:
         '''
         Returns a train dataframe and a test dataframe (fold_train, fold_test)
         from which one can sample (X,y) sequences.
@@ -78,10 +66,9 @@ def create_folds_sequences(label_encode_columns):
 
         return (fold_train, fold_test)
 
-    fold_train, fold_test = train_test_split(fold,
+    fold_train, fold_test = train_test_split(get_fold(df, FOLD_LENGTH, FOLD_STRIDE),
                                             TRAIN_TEST_RATIO,
-                                            INPUT_LENGTH,
-                                            HORIZON)
+                                            INPUT_LENGTH)
 
     def get_Xi_yi(first_index: int,
                 fold: pd.DataFrame,
@@ -162,16 +149,13 @@ def create_folds_sequences(label_encode_columns):
                             output_length=OUTPUT_LENGTH,
                             stride=1)
 
-    print("Shapes for the training set:")
-    print(f"X_train.shape = {X_train.shape}, y_train.shape = {y_train.shape}")
-    print("Shapes for the test set:")
-    print(f"X_test.shape = {X_test.shape}, y_test.shape = {y_test.shape}")
+    return X_train, y_train, X_test, y_test
 
 ################################################################################################################
 
-def only_use_relevant_features(df): # optional, depends if we rund the model on all variables or not
+def only_use_relevant_features(df): # optional, depends if we run the model on all variables or not
     correlation_matrix = df.corr()
-    temperature_corr = correlation_matrix['temperature_2m']
+    temperature_corr = correlation_matrix[target2]
     high_corr_features = temperature_corr[abs(temperature_corr) > 0.55]
     relevant_features = high_corr_features.index.tolist()
     features = [col for col in relevant_features if col in df.columns]
@@ -179,69 +163,97 @@ def only_use_relevant_features(df): # optional, depends if we rund the model on 
 
 ################################################################################################################
 
-def initialize_base_model(X_train: tuple) -> Model:
-    reg_l2 = regularizers.L2(0.1)
+def initialize_best_model(X_train: tuple) -> Model:
+    class LSTMModel(HyperModel):
+        def build(self, hp):
+            reg_l2 = regularizers.L2(hp.Float('l2_reg', min_value=0.001, max_value=0.1, step=0.001))
 
-    # 1 - RNN architecture
-    model = models.Sequential()
-    model.add(layers.Input(shape=(X_train.shape[1], X_train.shape[2])))
+            #========================================================================================
 
-    # Recurrent Layer
-    model.add(layers.LSTM(units=32, activation='tanh',return_sequences=True,
-                        #   recurrent_dropout=0.3,dropout=0.3
-                        ))
+            model = models.Sequential()
 
-    # Hidden Dense Layer that we are regularizing
-    model.add(layers.Dense(16, activation="relu",
-                        #    kernel_regularizer = reg_l2
-                        ))
-    # model.add(layers.Dropout(rate=0.3))
+            # Input Layer
+            model.add(layers.Input(shape=(X_train.shape[1], X_train.shape[2])))
 
-    # Predictive Dense Layer
-    model.add(layers.Dense(1, activation='linear'))
+            # Recurrent Layer with tunable units and dropout
+            model.add(layers.LSTM(
+                units=hp.Int('units', min_value=16, max_value=128, step=16),
+                activation='tanh',
+                return_sequences=True,
+                recurrent_dropout=hp.Float('recurrent_dropout', min_value=0.2, max_value=0.5, step=0.05),
+                dropout=hp.Float('dropout', min_value=0.2, max_value=0.5, step=0.05)
+            ))
+            model.add(layers.LSTM(
+                units=hp.Int('units', min_value=16, max_value=128, step=16),
+                activation='tanh',
+                return_sequences=True,
+                recurrent_dropout=hp.Float('recurrent_dropout', min_value=0.2, max_value=0.5, step=0.05),
+                dropout=hp.Float('dropout', min_value=0.2, max_value=0.5, step=0.05)
+            ))
 
-    # 2 - Compiler
-    optimizer = Adam(learning_rate=0.0001)
-    model.compile(loss='mse', optimizer=optimizer, metrics=["mae"])
+            # Hidden Dense Layer with tunable regularization
+            model.add(layers.Dense(
+                units=hp.Int('dense_units', min_value=32, max_value=128, step=32),
+                activation="relu",
+                kernel_regularizer=reg_l2
+            ))
+            model.add(layers.Dropout(rate=hp.Float('dense_dropout', min_value=0.2, max_value=0.5, step=0.05)))
 
-    return model
+            # Output Layer
+            model.add(layers.Dense(1, activation='linear'))
 
-# 1) best_hps
-# 2) load model
-# assign a dictionary (kwargs, kargs)
+            # Compile the model
+            model.compile(
+                loss='mse',
+                optimizer=Adam(learning_rate=hp.Float('learning_rate', min_value=1e-5, max_value=1e-2, sampling='log')),
+                metrics=["mae"]
+            )
+
+            return model
 
 ################################################################################################################
 
-def fit_model(model: tf.keras.Model, verbose=1, X_train, y_train) -> Tuple[tf.keras.Model, dict]:
+def fit_and_build_best_model(X_train, y_train, RandomSearch, LSTMModel, X_test, y_test):
+    tuner = RandomSearch(
+        LSTMModel(),
+        objective='val_mae',
+        max_trials=10,
+        executions_per_trial=1,
+        directory='models',
+        project_name='temp_hyperparameters')
 
-    es = EarlyStopping(
-        monitor="val_mae",
-        patience=10,
-        mode="min",
-        restore_best_weights=True)
-
-    reduce_lr = ReduceLROnPlateau(
-        monitor='val_mae',
-        factor=0.1,
-        patience=5,
-        min_lr=1e-6)
-
-    history = model.fit(
+    tuner.search(
         X_train,
         y_train,
-        validation_split=0.3,
-        shuffle=False,
+        epochs=50,
         batch_size=64,
-        epochs=100,
-        callbacks=[es, reduce_lr],
-        verbose=verbose)
+        validation_split=0.3,  # Use a validation split
+        callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_mae', patience=2)])
 
-    return model, history
+    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+    print(f"Best Hyperparameters: {best_hps.values}")
+
+    # Build the best model with those hyperparameters
+    best_model = tuner.hypermodel.build(best_hps)
+
+    # Train the best model
+    history = best_model.fit(
+        X_train,
+        y_train,
+        validation_split=0.2,
+        epochs=100,
+        batch_size=64,
+        callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_mae', patience=15)])
+
+    test_results = best_model.evaluate(X_test, y_test)
+    print(f"Test MAE: {test_results[1]} Celsius degrees")
+
+    return best_hps, best_model
 
 ################################################################################################################
 
 def evaluate_model(
-        model: Model,
+        best_model,
         X_test: np.ndarray,
         y_test: np.ndarray,
         batch_size=64
@@ -249,7 +261,7 @@ def evaluate_model(
     """
     Evaluate trained model performance on the dataset
     """
-    res = model.evaluate(
+    res = best_model.evaluate(
         X_test,
         y_test,
         batch_size=batch_size,
@@ -260,3 +272,22 @@ def evaluate_model(
     mae = res["mae"]
 
     return loss, mae
+
+################################################################################################################
+################################################################################################################
+
+def safe_best_model(best_model):
+    models_folder = ('/Users/maxburger/code/MadMax1995bb/powder_alert2.0/models')
+    save_as_keras = (models_folder, 'best_model_temp.keras')
+
+    best_model.save(save_as_keras)
+
+    print(f"✅ Temperature model safed in the local models folder!")
+
+################################################################################################################
+
+def load_best_model(save_as_keras):
+    loaded_best_model = tf.keras.models.load_model(save_as_keras)
+
+    print(f"✅ Temperature model loaded successfully!")
+    return loaded_best_model
