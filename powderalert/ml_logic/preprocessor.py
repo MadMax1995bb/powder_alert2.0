@@ -60,5 +60,3 @@ def preprocess(data):
     # print(processed_columns)
 
     return pd.DataFrame(processed_data, columns=processed_columns)
-
-
