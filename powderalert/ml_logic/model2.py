@@ -13,6 +13,16 @@ from keras_tuner import HyperModel
 
 ################################################################################################################
 
+def only_use_relevant_features(df): # optional, depends if we run the model on all variables or not
+    correlation_matrix = df.corr()
+    temperature_corr = correlation_matrix[target2]
+    high_corr_features = temperature_corr[abs(temperature_corr) > 0.55]
+    relevant_features = high_corr_features.index.tolist()
+    features = [col for col in relevant_features if col in df.columns]
+    df = df[features]
+
+################################################################################################################
+
 def create_folds_sequences(df):
     FOLD_LENGTH = df.shape[0] # each fold will have the whole dataset --> only 1 fold in this model
     FOLD_STRIDE = 1 # sliding only on hour
@@ -150,16 +160,6 @@ def create_folds_sequences(df):
                             stride=1)
 
     return X_train, y_train, X_test, y_test
-
-################################################################################################################
-
-def only_use_relevant_features(df): # optional, depends if we run the model on all variables or not
-    correlation_matrix = df.corr()
-    temperature_corr = correlation_matrix[target2]
-    high_corr_features = temperature_corr[abs(temperature_corr) > 0.55]
-    relevant_features = high_corr_features.index.tolist()
-    features = [col for col in relevant_features if col in df.columns]
-    df = df[features]
 
 ################################################################################################################
 

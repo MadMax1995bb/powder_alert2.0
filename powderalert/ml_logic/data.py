@@ -149,12 +149,13 @@ def clean_data(df):
 
 def time_features(df: pd.DataFrame):
     df = clean_data(df)
-    df['hour_sin'] = np.sin(2 * np.pi * df.index.hour / 24)
-    df['hour_cos'] = np.cos(2 * np.pi * df.index.hour / 24)
-    df['day_of_week_sin'] = np.sin(2 * np.pi * df.index.dayofweek / 7)
-    df['day_of_week_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
-    df['month_sin'] = np.sin(2 * np.pi * (df.index.month - 1) / 12)
-    df['month_cos'] = np.cos(2 * np.pi * (df.index.month - 1) / 12)
+    df['hour_sin'] = np.sin(2 * np.pi * df['date'].dt.hour / 24)
+    df['hour_cos'] = np.cos(2 * np.pi * df['date'].dt.hour / 24)
+    df['day_of_week_sin'] = np.sin(2 * np.pi * df['date'].dt.dayofweek / 7)
+    df['day_of_week_cos'] = np.cos(2 * np.pi * df['date'].dt.dayofweek / 7)
+    df['month_sin'] = np.sin(2 * np.pi * (df['date'].dt.month - 1) / 12)
+    df['month_cos'] = np.cos(2 * np.pi * (df['date'].dt.month - 1) / 12)
+
     print(f"✅ time features engineered and saved into DataFrame")
     return df
 
