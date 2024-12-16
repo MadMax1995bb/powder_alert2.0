@@ -74,7 +74,8 @@ def pred_snowfall(X_pred: pd.DataFrame = None) -> np.ndarray:
     if X_pred is None:
         fetch_prediction_data(lat, long, variables=None, models="best_match")
 
-    model = load_model_snowfall()
+    # model = load_model_snowfall()
+    model = load_model()
     X_processed = preprocess_features(X_pred)
     y_pred = model.predict(X_processed)
 
@@ -88,7 +89,7 @@ def pred_temperature(X_pred: pd.DataFrame = None) -> np.ndarray:
     if X_pred is None:
         fetch_prediction_data(lat, long, variables=None, models="best_match")
 
-    model = load_model_temperature()
+    model = load_model()
     X_processed = preprocess_features(X_pred)
     y_pred = model.predict(X_processed)
 
