@@ -7,7 +7,6 @@ from requests.exceptions import RequestException
 from google.cloud import bigquery
 from colorama import Fore, Style
 from powderalert.ml_logic.params import *
-from powderalert.ml_logic.preprocessor import define_X, preprocess
 from datetime import datetime as dt
 
 
@@ -110,7 +109,7 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
         "latitude": latitude,
         "longitude": longitude,
         "past_days": prediction_length,  # Number of past days to fetch
-        "forecast_days": prediction_length,  # Only fetch past data
+        "forecast_days": 0,  # Only fetch past data
         "hourly": variables,
         "models": models
     }
@@ -182,21 +181,9 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
 
 def clean_data(df):
     df['date'] = df['date'].dt.tz_localize(None)
-    df = df.set_index(['date'])
+    df = df.set_index(['date']) # see in fast.py
     df = df.drop_duplicates()
     print(f"✅ Data cleaned")
-    return df
-
-def time_features(df: pd.DataFrame):
-    df = clean_data(df)
-    df['hour_sin'] = np.sin(2 * np.pi * df['date'].dt.hour / 24)
-    df['hour_cos'] = np.cos(2 * np.pi * df['date'].dt.hour / 24)
-    df['day_of_week_sin'] = np.sin(2 * np.pi * df['date'].dt.dayofweek / 7)
-    df['day_of_week_cos'] = np.cos(2 * np.pi * df['date'].dt.dayofweek / 7)
-    df['month_sin'] = np.sin(2 * np.pi * (df['date'].dt.month - 1) / 12)
-    df['month_cos'] = np.cos(2 * np.pi * (df['date'].dt.month - 1) / 12)
-
-    print(f"✅ time features engineered and saved into DataFrame")
     return df
 
 def load_data_to_bq(data: pd.DataFrame, gcp_project:str, bq_dataset:str,table: str,truncate: bool) -> None:

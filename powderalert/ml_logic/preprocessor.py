@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
@@ -11,21 +12,31 @@ def label_encode_columns(cat_data, cat_columns):
         cat_data[col] = LabelEncoder().fit_transform(cat_data[col])
     return cat_data
 
-def define_X(df: pd.DataFrame, target:list):
-    X = df.drop(columns=target, axis=1)
-    return X
-
 def preprocess(data):
     """
-    Process the input data X by applying label encoding to categorical columns
+    Process the input data X by adding cylical feature, applying label encoding to categorical columns
     and standard scaling to numerical columns.
-
     Parameters:
         X (pd.DataFrame): Input dataframe to process.
-
     Returns:
         pd.DataFrame: Processed dataframe.
     """
+
+    # Check if the DataFrame index is a datetime-like index
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("The DataFrame index must be a datetime-like index (e.g., pd.DatetimeIndex). "
+                        "Ensure your DataFrame has a datetime index using data.set_index().")
+
+    #Add cyclical features
+    data['hour_sin'] = np.sin(2 * np.pi * data.index.hour / 24)
+    data['hour_cos'] = np.cos(2 * np.pi * data.index.hour / 24)
+
+    data['day_of_week_sin'] = np.sin(2 * np.pi * data.index.dayofweek / 7)
+    data['day_of_week_cos'] = np.cos(2 * np.pi * data.index.dayofweek / 7)
+
+    data['month_sin'] = np.sin(2 * np.pi * (data.index.month - 1) / 12)
+    data['month_cos'] = np.cos(2 * np.pi * (data.index.month - 1) / 12)
+
     # Define categorical and numerical columns
     cat_columns = ['weather_code']
     num_columns = data.drop(columns=cat_columns).select_dtypes(include=['float64']).columns.tolist()

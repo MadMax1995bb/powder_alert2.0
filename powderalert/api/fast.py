@@ -1,10 +1,9 @@
-import pandas as pd
 from fastapi import FastAPI
-from datetime import datetime
-from powderalert.ml_logic.data import fetch_prediction_data, clean_data, time_features
-from powderalert.ml_logic.preprocessor import preprocess, define_X
+from powderalert.ml_logic.data import fetch_prediction_data, clean_data
+from powderalert.ml_logic.preprocessor import preprocess
 from powderalert.ml_logic.params import *
 from powderalert.ml_logic.registry import load_model_snowfall, load_model_temperature
+from darts import TimeSeries
 
 app = FastAPI()
 
@@ -16,8 +15,8 @@ app = FastAPI()
 # app.state.model2 = TransformerModel.load(max_model_relative_path)
 # app.state.model = load_model_snowfall(target2)
 
-app.state.model1 = load_model_snowfall('snowfall')
-app.state.model2 = load_model_temperature('temperature')
+app.state.model1 = load_model_snowfall()
+app.state.model2 = load_model_temperature()
 
 @app.get("/")
 def root():
@@ -27,13 +26,13 @@ def root():
 def predict(lat: float, long: float):
 
     data = fetch_prediction_data(lat,long)
-    data_engineered_cleaned = time_features(data)
-    cleaned_data = clean_data(data_engineered_cleaned)
-    X_pred = define_X(cleaned_data, app.state.model1)
-    X_processed = preprocess(X_pred)
+    cleaned_data = clean_data(data)
+    X_processed = preprocess(cleaned_data)
 
-    snowfall_series = TimeSeries.from_dataframe(X_processed, 'date', 'snowfall')
-    feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_processed.columns)
+    X_pred_columns = X_processed.drop(columns=['snowfall']).columns.tolist()
+
+    snowfall_series = TimeSeries.from_dataframe(X_processed, value_cols=['snowfall']).astype("float32")
+    feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_pred_columns).astype("float32")
 
     y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48)
 
@@ -46,14 +45,12 @@ def predict(lat: float, long: float):
         'prediction': y_pred
     }
 
-@app.get("/predict_temp")
-def predict():
+@app.get("/predict_temperature")
+def predict(lat: float, long: float):
 
     data = fetch_prediction_data(lat,long)
-    data_engineered_cleaned = time_features(data)
-    cleaned_data = clean_data(data_engineered_cleaned)
-    X_pred = define_X(cleaned_data, app.state.model1)
-    X_processed = preprocess(X_pred)
+    cleaned_data = clean_data(data)
+    X_processed = preprocess(cleaned_data)
 
     y_pred = app.state.model2.predict(X_processed)
 
