@@ -43,3 +43,5 @@ docker_deploy:
 
 run_api:
 	uvicorn powderalert.api.fast:app --reload
+
+	
