@@ -33,7 +33,7 @@ def load_model_snowfall():
 
         # Get the latest model version name by the timestamp on disk
         local_model_directory = os.path.join(LOCAL_REGISTRY_PATH, 'models', 'snowfall')
-        local_model_paths = glob.glob(f"{local_model_directory}/*")
+        local_model_paths = glob.glob(f"{local_model_directory}/*.pt")
 
         if not local_model_paths:
             return None
