@@ -10,14 +10,6 @@ import pandas as pd
 
 app = FastAPI()
 
-# model_relative_path = 'models/my_model.pt'
-# app.state.model = TransformerModel.load(model_relative_path)
-# app.state.model = load_model_snowfall(target1)
-
-# max_model_relative_path = 'models/max_fullDS_all_features.keras'
-# app.state.model2 = TransformerModel.load(max_model_relative_path)
-# app.state.model = load_model_snowfall(target2)
-
 app.state.model1 = load_model_snowfall()
 app.state.model2 = load_model_temperature()
 
@@ -37,7 +29,7 @@ def predict(lat: float, long: float):
     snowfall_series = TimeSeries.from_dataframe(X_processed, value_cols=['snowfall']).astype("float32")
     feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_pred_columns).astype("float32")
 
-    y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48)
+    y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48).values().flatten().tolist()
 
     print(y_pred)
     # ⚠️ fastapi only accepts simple Python data types as a return value
