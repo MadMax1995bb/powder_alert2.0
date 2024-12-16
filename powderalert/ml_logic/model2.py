@@ -272,22 +272,3 @@ def evaluate_model(
     mae = res["mae"]
 
     return loss, mae
-
-################################################################################################################
-################################################################################################################
-
-def safe_best_model(best_model):
-    models_folder = ('/Users/maxburger/code/MadMax1995bb/powder_alert2.0/models')
-    save_as_keras = (models_folder, 'best_model_temp.keras')
-
-    best_model.save(save_as_keras)
-
-    print(f"✅ Temperature model safed in the local models folder!")
-
-################################################################################################################
-
-def load_best_model(save_as_keras):
-    loaded_best_model = tf.keras.models.load_model(save_as_keras)
-
-    print(f"✅ Temperature model loaded successfully!")
-    return loaded_best_model

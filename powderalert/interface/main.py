@@ -68,20 +68,27 @@ def preprocess(table_name,min_date:str = start_date_hist, max_date:str = end_dat
     print("✅ preprocess() done \n")
 
 
-def pred(X_pred: pd.DataFrame = None) -> np.ndarray:
+def pred_snowfall(X_pred: pd.DataFrame = None) -> np.ndarray:
     print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
 
     if X_pred is None:
-        X_pred = pd.DataFrame(dict(
-            pickup_datetime=[pd.Timestamp("2013-07-06 17:18:00", tz='UTC')],
-            pickup_longitude=[-73.950655],
-            pickup_latitude=[40.783282],
-            dropoff_longitude=[-73.984365],
-            dropoff_latitude=[40.769802],
-            passenger_count=[1],
-        ))
+        fetch_prediction_data(lat, long, variables=None, models="best_match")
 
-    model = load_model()
+    model = load_model_snowfall()
+    X_processed = preprocess_features(X_pred)
+    y_pred = model.predict(X_processed)
+
+    print(f"✅ pred() done")
+
+    return y_pred
+
+def pred_temperature(X_pred: pd.DataFrame = None) -> np.ndarray:
+    print(Fore.MAGENTA + "\n ⭐️ Use case: pred" + Style.RESET_ALL)
+
+    if X_pred is None:
+        fetch_prediction_data(lat, long, variables=None, models="best_match")
+
+    model = load_model_temperature()
     X_processed = preprocess_features(X_pred)
     y_pred = model.predict(X_processed)
 
