@@ -34,7 +34,7 @@ def predict(lat: float, long: float):
     snowfall_series = TimeSeries.from_dataframe(X_processed, value_cols=['snowfall']).astype("float32")
     feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_pred_columns).astype("float32")
 
-    y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48)
+    y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48).values().flatten().tolist()
 
     print(y_pred)
     # ⚠️ fastapi only accepts simple Python data types as a return value
