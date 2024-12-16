@@ -5,6 +5,7 @@ from colorama import Fore, Style
 from tensorflow import keras
 from darts.models import TransformerModel
 from powderalert.ml_logic.params import MODEL_TARGET, LOCAL_REGISTRY_PATH
+import torch
 
 # def load_model():
 #     model_snowfall_path = os.path.join(LOCAL_REGISTRY_PATH, 'models', 'snowfall')
@@ -39,7 +40,7 @@ def load_model_snowfall():
 
         most_recent_model_path_on_disk = max(local_model_paths, key=os.path.getmtime)
 
-        latest_model = TransformerModel.load(most_recent_model_path_on_disk, map_location="cpu")
+        latest_model = TransformerModel.load(most_recent_model_path_on_disk, map_location=torch.device('cpu'))
 
         print("✅ Model loaded from local disk")
 

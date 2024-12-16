@@ -1,6 +1,6 @@
 from fastapi import FastAPI
-from powderalert.ml_logic.data import fetch_prediction_data, clean_data, time_features
-from powderalert.ml_logic.preprocessor import preprocess, define_X
+from powderalert.ml_logic.data import fetch_prediction_data, clean_data
+from powderalert.ml_logic.preprocessor import preprocess
 from powderalert.ml_logic.params import *
 from powderalert.ml_logic.registry import load_model_snowfall, load_model_temperature
 from darts import TimeSeries
@@ -25,16 +25,14 @@ def root():
 @app.get("/predict_snowfall")
 def predict(lat: float, long: float):
 
-    # breakpoint()
     data = fetch_prediction_data(lat,long)
     cleaned_data = clean_data(data)
-    cleaned_data['date'] = cleaned_data.index # might be updated later
-    data_engineered_cleaned = time_features(cleaned_data)
-    # X_pred = define_X(data_engineered_cleaned, target1)
-    X_processed = preprocess(data_engineered_cleaned)
+    X_processed = preprocess(cleaned_data)
 
-    snowfall_series = TimeSeries.from_dataframe(X_processed, value_cols=['snowfall'])
-    feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_processed.columns)
+    X_pred_columns = X_processed.drop(columns=['snowfall']).columns.tolist()
+
+    snowfall_series = TimeSeries.from_dataframe(X_processed, value_cols=['snowfall']).astype("float32")
+    feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_pred_columns).astype("float32")
 
     y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48)
 
@@ -48,13 +46,11 @@ def predict(lat: float, long: float):
     }
 
 @app.get("/predict_temperature")
-def predict():
+def predict(lat: float, long: float):
 
     data = fetch_prediction_data(lat,long)
-    data_engineered_cleaned = time_features(data)
-    cleaned_data = clean_data(data_engineered_cleaned)
-    X_pred = define_X(cleaned_data, target2)
-    X_processed = preprocess(X_pred)
+    cleaned_data = clean_data(data)
+    X_processed = preprocess(cleaned_data)
 
     y_pred = app.state.model2.predict(X_processed)
 
