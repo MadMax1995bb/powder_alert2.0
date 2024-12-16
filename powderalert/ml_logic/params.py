@@ -12,6 +12,9 @@ prediction_length = 2
 target1 = ['snowfall']
 target2 = ['temperature_2m']
 
+MODEL_TARGET = 'local'
+LOCAL_REGISTRY_PATH = os.path.join(os.path.expanduser('~'), 'code', 'MadMax1995bb', 'powder_alert2.0')
+
 
 ##################  VARIABLES  ##################
 # DATA_SIZE = os.environ.get("DATA_SIZE")
