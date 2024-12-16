@@ -10,14 +10,6 @@ import pandas as pd
 
 app = FastAPI()
 
-# model_relative_path = 'models/my_model.pt'
-# app.state.model = TransformerModel.load(model_relative_path)
-# app.state.model = load_model_snowfall(target1)
-
-# max_model_relative_path = 'models/max_fullDS_all_features.keras'
-# app.state.model2 = TransformerModel.load(max_model_relative_path)
-# app.state.model = load_model_snowfall(target2)
-
 app.state.model1 = load_model_snowfall()
 app.state.model2 = load_model_temperature()
 
