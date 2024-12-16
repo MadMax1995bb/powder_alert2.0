@@ -142,13 +142,12 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
 
 def clean_data(df):
     df['date'] = df['date'].dt.tz_localize(None)
-    df = df.set_index(['date'])
+    df = df.set_index(['date']) # see in fast.py
     df = df.drop_duplicates()
     print(f"✅ Data cleaned")
     return df
 
 def time_features(df: pd.DataFrame):
-    df = clean_data(df)
     df['hour_sin'] = np.sin(2 * np.pi * df['date'].dt.hour / 24)
     df['hour_cos'] = np.cos(2 * np.pi * df['date'].dt.hour / 24)
     df['day_of_week_sin'] = np.sin(2 * np.pi * df['date'].dt.dayofweek / 7)
