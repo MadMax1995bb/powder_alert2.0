@@ -2,7 +2,8 @@ import glob
 import os
 
 from colorama import Fore, Style
-from tensorflow import keras
+# from tensorflow import keras
+import tensorflow as tf
 from darts.models import TransformerModel
 from powderalert.ml_logic.params import MODEL_TARGET, LOCAL_REGISTRY_PATH
 import torch
@@ -46,7 +47,7 @@ def load_model_snowfall():
 
         return latest_model
 
-def load_model_temperature() -> keras.Model:
+def load_model_temperature():
     """
     Return a saved model:
     - locally (latest one in alphabetical order)
@@ -66,7 +67,7 @@ def load_model_temperature() -> keras.Model:
 
         most_recent_model_path_on_disk = max(local_model_paths, key=os.path.getmtime)
 
-        latest_model = keras.models.load_model(most_recent_model_path_on_disk)
+        latest_model = tf.keras.models.load_model(most_recent_model_path_on_disk)
 
         print("✅ Model loaded from local disk")
 
