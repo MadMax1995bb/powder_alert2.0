@@ -24,25 +24,28 @@ def predict(lat: float, long: float):
     cleaned_data = clean_data(data)
     X_processed = preprocess(cleaned_data)
 
+    #Get time information
+    first_predict_time = (pd.Timestamp(data.date.tail(1).values[0]) + pd.Timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
+
     X_pred_columns = X_processed.drop(columns=['snowfall']).columns.tolist()
 
     snowfall_series = TimeSeries.from_dataframe(X_processed, value_cols=['snowfall']).astype("float32")
     feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_pred_columns).astype("float32")
 
     y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48).values().flatten().tolist()
-
     print(y_pred)
     # ⚠️ fastapi only accepts simple Python data types as a return value
     # among them dict, list, str, int, float, bool
     # in order to be able to convert the api response to JSON
-    # uvicorn powderalert.api.fast:app --reload
+    # uvicorn simple:app --reload
     return {
-        'prediction': y_pred
+        'first_predict_time': first_predict_time,
+        'snowfall_prediction': y_pred
     }
+
 
 @app.get("/predict_temperature")
 def predict(lat: float, long: float):
-
     data = fetch_prediction_data(lat,long)
     cleaned_data = clean_data(data)
     df = preprocess(cleaned_data)
@@ -52,18 +55,19 @@ def predict(lat: float, long: float):
     # if 'Unnamed: 0' in df.columns:
     #     df = df.drop(columns=['Unnamed: 0'])
     # current_time = datetime.now()
-
     # last_48h = df[(df['date'] <= current_time) & (df['date'] > current_time - timedelta(hours=48))]
     # last_48h = last_48h.drop(columns='date')
     #####################################################
+    #Get time information
+
+    first_predict_time = (pd.Timestamp(data.date.tail(1).values[0]) + pd.Timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
 
     last_48h = np.expand_dims(df, axis=0)
-
     predictions = app.state.model2.predict(last_48h)
     predicted_temperatures = predictions[0]
-
     next_48h = [float(i) for i in predicted_temperatures]
 
     return {
-        'prediction': next_48h
+        'first_predict_time': first_predict_time,
+        'temperature_prediction': next_48h
     }
