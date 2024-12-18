@@ -25,18 +25,23 @@ def predict(lat: float, long: float):
 
     data = fetch_prediction_data(lat,long)
     cleaned_data = clean_data(data)
-    X_processed = preprocess(cleaned_data)
+
+    X = cleaned_data.drop(columns = target1)
+    y = cleaned_data[target1]
+    y = y.reset_index()
+
+    X_processed = preprocess(X)
+    df = y.join(X_processed)
 
     #Get time information
     first_predict_time = (pd.Timestamp(data.date.tail(1).values[0]) + pd.Timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
 
-    X_pred_columns = X_processed.drop(columns=['snowfall']).columns.tolist()
+    X_pred_columns = X_processed.columns.tolist()
 
-    snowfall_series = TimeSeries.from_dataframe(X_processed, value_cols=['snowfall']).astype("float32")
-    feature_series = TimeSeries.from_dataframe(X_processed, value_cols=X_pred_columns).astype("float32")
+    snowfall_series = TimeSeries.from_dataframe(df, 'date', value_cols=['snowfall']).astype("float32")
+    feature_series = TimeSeries.from_dataframe(df, 'date', value_cols=X_pred_columns).astype("float32")
 
     y_pred = app.state.model1.predict(series=snowfall_series, past_covariates=feature_series, n=48).values().flatten().tolist()
-    print(y_pred)
     # ⚠️ fastapi only accepts simple Python data types as a return value
     # among them dict, list, str, int, float, bool
     # in order to be able to convert the api response to JSON
