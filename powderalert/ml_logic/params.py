@@ -10,6 +10,7 @@ prediction_length = 2
 
 target1 = ['snowfall']
 target2 = ['temperature_2m']
+# target 3 = ['wind_speed']
 
 MODEL_TARGET = 'local'
 LOCAL_REGISTRY_PATH = os.path.join(os.getcwd()) # Change it without home direcot
