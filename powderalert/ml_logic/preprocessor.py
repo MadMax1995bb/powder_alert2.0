@@ -4,8 +4,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import FunctionTransformer, StandardScaler, LabelEncoder
 from sklearn.pipeline import make_pipeline
 
-# from ml_logic.params import *
-
 def label_encode_columns(cat_data, cat_columns):
     """Apply LabelEncoder to specified categorical columns."""
     for col in cat_columns:
