@@ -93,6 +93,7 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
 
+
     # Weather variables
     variables = [
         "temperature_2m", "relative_humidity_2m", "dew_point_2m", "precipitation",
@@ -108,8 +109,8 @@ def fetch_prediction_data(latitude, longitude, variables=None, models="best_matc
     params = {
         "latitude": latitude,
         "longitude": longitude,
-        "past_days": prediction_length,  # Number of past days to fetch
-        "forecast_days": 0,  # Only fetch past data
+        "past_hours": prediction_length,  # Number of past days to fetch
+        "forecast_hours": 0,  # Only fetch past data
         "hourly": variables,
         "models": models
     }
