@@ -21,11 +21,20 @@ def root():
 def predict(lat: float, long: float):
     data = fetch_prediction_data(lat,long)
     cleaned_data = clean_data(data)
-    df = preprocess(cleaned_data)
+
+    breakpoint()
+
+    X = cleaned_data.drop(columns = target1)
+    y = cleaned_data[target1]
+    y = y.reset_index()
+
+    X_processed = preprocess(X)
+    df = y.join(X_processed)
 
     first_predict_time = (pd.Timestamp(data.date.tail(1).values[0]) + pd.Timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
 
-    last_48h = np.expand_dims(df, axis=0)
+    last_48h = df.drop(columns = "date")
+    last_48h = np.expand_dims(last_48h, axis=0)
     predictions = app.state.model1.predict(last_48h)
     predicted_temperatures = predictions[0]
     next_48h = [float(i) for i in predicted_temperatures]
@@ -41,7 +50,13 @@ def predict(lat: float, long: float):
 def predict(lat: float, long: float):
     data = fetch_prediction_data(lat,long)
     cleaned_data = clean_data(data)
-    df = preprocess(cleaned_data)
+
+    X = cleaned_data.drop(columns = target2)
+    y = cleaned_data[target2]
+    y = y.reset_index()
+
+    X_processed = preprocess(X)
+    df = y.join(X_processed)
 
     first_predict_time = (pd.Timestamp(data.date.tail(1).values[0]) + pd.Timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
 
