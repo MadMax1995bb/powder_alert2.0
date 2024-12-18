@@ -6,7 +6,7 @@ long = 11.84457426992035
 start_date_hist = "2009-01-01"
 end_date_hist = "2023-12-31"
 
-prediction_length = 2
+prediction_length = 48 #
 
 target1 = ['snowfall']
 target2 = ['temperature_2m']
