@@ -8,9 +8,8 @@ end_date_hist = "2023-12-31"
 
 prediction_length = 48 #
 
-target1 = ['snowfall']
-target2 = ['temperature_2m']
-# target 3 = ['wind_speed']
+target1 = ['temperature_2m']
+target2 = ['snow_depth']
 
 MODEL_TARGET = 'local'
 LOCAL_REGISTRY_PATH = os.path.join(os.getcwd()) # Change it without home direcot
