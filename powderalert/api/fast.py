@@ -77,7 +77,7 @@ def predict(lat: float, long: float):
     y = cleaned_data[target2]
     y = y.reset_index()
 
-    with open('models/pipeline.dill', 'rb') as file:
+    with open('models/preprocessor_snow_depth.dill', 'rb') as file:
         preprocessor = dill.load(file)
 
     X_processed = preprocess_pred_snowdepth(X, preprocessor=preprocessor)

@@ -54,7 +54,7 @@ def load_model_snowdepth():
 
         most_recent_model_path_on_disk = max(local_model_paths, key=os.path.getmtime)
 
-        latest_model = TransformerModel.load(most_recent_model_path_on_disk)
+        latest_model = TransformerModel.load(most_recent_model_path_on_disk, map_location=torch.device('cpu'))
 
         print("✅ Model loaded from local disk")
 
