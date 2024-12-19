@@ -47,7 +47,35 @@ def load_model_snowdepth():
 
         # Get the latest model version name by the timestamp on disk
         local_model_directory = os.path.join(LOCAL_REGISTRY_PATH, 'models', 'snowdepth')
-        local_model_paths = glob.glob(f"{local_model_directory}/*")
+        local_model_paths = glob.glob(f"{local_model_directory}/*.pt")
+
+        if not local_model_paths:
+            return None
+
+        most_recent_model_path_on_disk = max(local_model_paths, key=os.path.getmtime)
+
+        latest_model = TransformerModel.load(most_recent_model_path_on_disk)
+
+        print("✅ Model loaded from local disk")
+
+        return latest_model
+
+###################################################################################
+
+def load_model_windspeed():
+    """
+    Return a saved model:
+    - locally (latest one in alphabetical order)
+    - or from GCS (most recent one) if MODEL_TARGET=='gcs'  --> optional
+    Return None (but do not Raise) if no model is found
+    """
+
+    if MODEL_TARGET == "local":
+        print(Fore.BLUE + f"\nLoad latest model from local registry..." + Style.RESET_ALL)
+
+        # Get the latest model version name by the timestamp on disk
+        local_model_directory = os.path.join(LOCAL_REGISTRY_PATH, 'models', 'windspeed')
+        local_model_paths = glob.glob(f"{local_model_directory}/*.keras")
 
         if not local_model_paths:
             return None
