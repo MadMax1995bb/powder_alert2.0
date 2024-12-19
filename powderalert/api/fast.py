@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from powderalert.ml_logic.data import fetch_prediction_data, clean_data
+from powderalert.ml_logic.data import fetch_prediction_data, clean_data, fetch_prediction_data_temp
 from powderalert.ml_logic.preprocessor import preprocess_pred_temperature, preprocess_pred_snowdepth, preprocess_pred_windspeed
 from powderalert.ml_logic.params import *
 from powderalert.ml_logic.registry import load_model_temperature, load_model_snowdepth, load_model_windspeed
@@ -7,7 +7,8 @@ from darts import TimeSeries
 from sklearn.preprocessing import LabelEncoder
 import numpy as np
 import pandas as pd
-import pickle
+from datetime import datetime as dt
+from datetime import timedelta
 import dill
 
 
@@ -39,13 +40,20 @@ def root():
 @app.get("/predict_temperature")
 def predict(lat: float, long: float):
 
-    data = fetch_prediction_data(lat,long)
-
-    first_predict_time = (pd.Timestamp(data.date.tail(1).values[0]) + pd.Timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
+    data = fetch_prediction_data_temp(lat,long)
 
     data['date'] = pd.to_datetime(data['date'], errors='coerce').dt.tz_localize(None)
 
-    X = data
+    current_time = dt.now()
+    earliest_time = current_time - timedelta(hours=48)
+    data['datetime'] = pd.date_range(start=dt.now() - timedelta(hours=len(data)), periods=len(data), freq='H')
+    data = data[data['datetime'].between(earliest_time, current_time)]
+
+    first_predict_time = (pd.Timestamp(data.date.head(1).values[0]) + pd.Timedelta(hours=1)).strftime("%Y-%m-%dT%H:00")
+
+    data = data.drop(columns = 'datetime')
+
+    X = data.drop(columns = 'temperature_2m')
     X['date'] = pd.to_datetime(X['date'])
     X.set_index('date', inplace=True)
     y = data.temperature_2m
@@ -53,10 +61,27 @@ def predict(lat: float, long: float):
     with open('models/preprocessor_temperature.dill', 'rb') as file:
         preprocessor = dill.load(file)
 
-    X_processed = preprocess_pred_temperature(X, preprocessor=preprocessor)
+    X_processed = preprocess_pred_temperature(X, preprocessor)
+
     df = pd.concat([y.reset_index(drop=True), X_processed], axis=1)
 
-    last_48h = np.expand_dims(df, axis=0)
+    last_48h = df
+
+    last_48h = np.expand_dims(last_48h, axis=0)
+
+    # X = data
+    # X['date'] = pd.to_datetime(X['date'])
+    # X.set_index('date', inplace=True)
+    # y = data.temperature_2m
+
+    # with open('models/preprocessor_temperature.dill', 'rb') as file:
+    #     preprocessor = dill.load(file)
+
+    # X_processed = preprocess_pred_temperature(X, preprocessor=preprocessor)
+    # df = pd.concat([y.reset_index(drop=True), X_processed], axis=1)
+
+    # last_48h = np.expand_dims(df, axis=0)
+
     predictions = app.state.model1.predict(last_48h)
     predicted_temperatures = predictions[0]
     next_48h = [float(i) for i in predicted_temperatures]
@@ -77,7 +102,7 @@ def predict(lat: float, long: float):
     y = cleaned_data[target2]
     y = y.reset_index()
 
-    with open('models/preprocessor_snow_depth.dill', 'rb') as file:
+    with open('models/pipeline.dill', 'rb') as file:
         preprocessor = dill.load(file)
 
     X_processed = preprocess_pred_snowdepth(X, preprocessor=preprocessor)
