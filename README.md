@@ -1,82 +1,79 @@
-# **PowderAlert 2.0: Snow Quality and Depth Prediction**
+# **PowderAlert 2.0: Live Powder Day Forecaster**
 
 ## **Project Overview**  
-The goal of this project is to predict **snow quality** and **snow depth** at the Austrian skiing resort **Hochfügen** using historical weather data. Predictions are made via regression and classification tasks. These results are combined into a scoring model that evaluates how good a powder day might be for a selected timeframe (up to two days in the future).  
+PowderAlert 2.0 is a **freeride planning tool** designed for ski and snowboard enthusiasts, predicting **snow depth**, **temperature**, and **wind speed** at the Austrian skiing resort **Hochfügen**. By combining historical weather data and advanced machine learning techniques, the app helps users identify optimal powder days to avoid disappointment on the slopes.
 
-### **Scope**  
-Currently, the project scope is limited due to a paywall restricting access to historical bulk weather data. However, predictions leverage:  
-- **Regression Tasks**: Predicting snow depth, wind speed, and soil temperature.  
-- **Classification Tasks** (optional): Predicting weather conditions (e.g., weather code).  
-- **Scoring Model**: Evaluating the skiing conditions for powder days based on the predicted results.  
+Predictions are made using **deep learning models** and integrated into a **Powder Day Indicator** that evaluates conditions for up to **48 hours in advance**.
 
 ---
 
-## **Datasets**  
-We use two main datasets for this project, combining them to enrich the base dataset:  
-1. **Base Dataset**: [Open-Meteo Historical Weather API](https://open-meteo.com/en/docs/historical-weather-api)  
-2. **Additional Dataset**: [OpenWeatherMap Historical Bulk Data](https://openweathermap.org/history-bulk)  
-
-### **Merged Parameters**  
-The following parameters are integrated into the base dataset from OpenWeatherMap:  
-- City Name  
-- `main.temp_min`, `main.temp_max`  
-- Rain (`rain_3h`)  
-- Weather Code (`weather.id`)  
-- Weather Description (`weather.main`, `weather.description`)  
+## **Key Features**  
+- **Forecast Models**:
+  - **Snow Depth**: Predicted using a **Darts TransformerModel** with hyperparameter optimization.
+  - **Temperature and Wind Speed**: Predicted via **LSTM deep learning models**.
+- **Powder Day Indicator**: Combines predictions of snow depth, temperature, and wind speed into a user-friendly score for freeride conditions.
+- **Interactive App**: Visualizes forecasts and allows users to plan their skiing or snowboarding trips.
 
 ---
 
-## **Project Workflow**  
-The overall project process is illustrated in the diagram below:  
-![Project Overview](https://github.com/user-attachments/assets/145c1ebb-443d-43d6-87a1-f7be001f322b)  
-*(This diagram might be updated as the project evolves.)*  
+## **Data Sources**  
+The project leverages historical weather data from the **[Open-Meteo API](https://open-meteo.com/en/docs/historical-weather-api)**, which provided the most consistent and usable data for our models. 
 
-Key milestones during the first phase of the project are documented here:  
-![Phase 1 Steps](https://github.com/user-attachments/assets/d4893370-aa62-4292-8f21-e8def598a2b2)
+We initially considered incorporating the **OpenWeatherMap API**, but its data format did not match the requirements for seamless integration, so it was excluded from the final implementation.
 
-Timeline for the Project:
-![grafik](https://github.com/user-attachments/assets/c5f36f73-9661-417c-93a1-b653d2e80340)
+### **Features**  
+The dataset includes 23 features, such as:  
+- Temperature (min/max)  
+- Snowfall  
+- Wind speed  
+- Weather conditions and descriptions  
 
-For detailed progress tracking, check out our Trello board:  
-👉 [Trello: PowderAlert 2.0](https://trello.com/b/ZE5LyJcF/powderalert20)  
-
----
-
-## **Models**  
-We focus on time-series forecasting using hourly data. Our primary model is based on the **[DARTS library](https://unit8co.github.io/darts/)**, which supports advanced time-series models.  
-
-### **Planned Models**  
-- **Regression**:  
-  - Snow depth for time slots (up to 48 hours ahead).  
-  - Wind speed.  
-  - Soil temperature.  
-- **Classification** (optional): Predicting weather conditions (e.g., weather code).  
-
-### **Live Data**  
-We integrate real-time data from the following APIs:  
-- [OpenWeatherMap API](https://openweathermap.org/api)  
-- [Open-Meteo API](https://open-meteo.com/en/docs)  
+Data preprocessing involved cleaning, removing outliers, and aggregating data into meaningful time intervals.
 
 ---
 
-## **Final Interface Requirements**  
-To deliver a user-friendly interface, we aim for:  
-- A working API.  
-- Dockerized deployment.  
-- Cloud-run compatibility.  
-- A web interface.  
-
-### **Optional Features**  
-- Interactive map to select locations or input latitude/longitude.  
-- Sliders to set forecast times (e.g., **6 AM next day**, **12 PM next day**, etc.).  
-- Additional user-friendly features.  
+## **Modeling Approach**  
+Our models capture **seasonal weather patterns** and deliver reliable forecasts, especially in stable conditions:  
+1. **Darts TransformerModel**: Optimized with Optuna for snow depth prediction.  
+   - Metrics: Mean Absolute Error (MAE), backtesting, and historical forecasting.  
+2. **LSTM Deep Learning Models**: Predict temperature and wind speed with fine-tuned hyperparameters.  
 
 ---
 
-## **Future Scope**  
-The project can be extended with additional data and functionality, such as:  
-- Incorporating more datasets for broader coverage.  
-- Adding **avalanche bulletin reports** via web scraping and **NLP models**.  
-- Improving the web interface or deploying a polished app.  
+## **The App**  
+[Explore the PowderAlert 2.0 App](https://powderalert.streamlit.app/)  
 
----  
+The app offers:  
+- **Real-Time Forecasts**: Access accurate predictions for snow depth, wind speed, and temperature.  
+- **Powder Day Indicator**: Simplifies decision-making for freeride enthusiasts.  
+- **Scalable Design**: Built for future enhancements, including additional locations and avalanche data integration.
+
+---
+
+## **Future Scalability**  
+- Add more skiing locations and weather stations.  
+- Incorporate avalanche bulletins and NLP-based analyses.  
+- Regularly retrain models with updated weather data.  
+- Enhance the user interface with interactive maps and advanced customization options.  
+- Deploy a mobile-friendly version of the app.  
+
+For detailed ideas, check out our [Trello Board](https://trello.com/b/ZE5LyJcF/powderalert20).
+
+---
+
+## **Acknowledgments**  
+This project was developed as part of the **Le Wagon AI & Data Science Bootcamp (Batch #1871)** by:  
+- Max Burger  
+- Anita Geiss  
+- Wisal Dhakouani  
+- Torsten Wrigley  
+- Luis Spee  
+
+We thank the instructors and the Le Wagon community for their guidance and support.
+
+---
+
+## **Connect**  
+For questions or further collaboration, connect with me on:  
+- **LinkedIn**: [Maximilian Andreas Burger](https://www.linkedin.com/in/maximilian-andreas-burger/)  
+- **Slack**: Max Burger (maxburger95@gmx.de)
